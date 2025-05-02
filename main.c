@@ -31,22 +31,12 @@ static inline void uart_write(const char *s)
 	Soft_UART_send_byte('\n');
 }
 
-int main(void)
+static inline void print_config(void)
 {
 	const int SLEN = 25;
 
 	char s[SLEN];
 	struct fpm_config cfg;
-
-	cli();
-	Soft_UART_init();
-	bit_set(DDRB,5);
-	sei();
-
-	if (fpm_init())
-		uart_write("FPM detected");
-	else
-		uart_write("FPM not detected");
 
 	if (fpm_get_config(&cfg)) {
 		uart_write("FPM config:");
@@ -89,6 +79,22 @@ int main(void)
 		else if (cfg.baud == 12)
 			uart_write("\tbaud: 115200");
 	}
+}
+
+int main(void)
+{
+	cli();
+	Soft_UART_init();
+	bit_set(DDRB,5);
+	sei();
+
+	if (fpm_init()) {
+		uart_write("FPM detected");
+		print_config();
+	}
+	else
+		uart_write("FPM not detected");
+
 	
     while (1) 
     {	
