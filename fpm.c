@@ -178,12 +178,30 @@ uint8_t fpm_setpwd(uint32_t pwd)
 	uint8_t buf[MAXPDLEN];
 
 	buf[0] = 0x12;
-	buf[1] = (uint8_t)((uint32_t)pwd >> 24);
-	buf[2] = (uint8_t)((uint32_t)pwd >> 16);
-	buf[3] = (uint8_t)((uint32_t)pwd >> 8);
-	buf[4] = (uint8_t)((uint32_t)pwd & 0xFF);
+	buf[1] = (uint8_t)(pwd >> 24);
+	buf[2] = (uint8_t)(pwd >> 16);
+	buf[3] = (uint8_t)(pwd >> 8);
+	buf[4] = (uint8_t)(pwd & 0xFF);
 
 	send(0x01, buf, 5);
 	recv(buf, &n);
 	return buf[0] == OK;
+}
+
+uint16_t fpm_getcount(void)
+{
+	uint16_t n, count;
+	uint8_t buf[MAXPDLEN];
+
+	buf[0] = 0x1D;
+	send(0x01, buf, 1);
+	recv(buf, &n);
+
+	count = 0;
+	if (buf[0] == OK && n >= 2) {
+		count = buf[1];
+		count <<= 8;
+		count |= buf[2];
+	}
+	return count;
 }

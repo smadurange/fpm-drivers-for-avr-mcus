@@ -85,13 +85,20 @@ static inline void print_config(void)
 
 int main(void)
 {
+	char s[20];
+	uint16_t template_count;
+
 	cli();
 	Soft_UART_init();
 	bit_set(DDRB,5);
 	sei();
 
-	if (fpm_init())
+	if (fpm_init()) {
 		print_config();
+		template_count = fpm_getcount();
+		snprintf(s, 20, "Template count: %d", template_count); 
+		uart_write(s);
+	}
 
     while (1) 
     {	

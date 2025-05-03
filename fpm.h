@@ -17,6 +17,8 @@ uint8_t fpm_init(void);
 
 uint8_t fpm_getcfg(struct fpm_config *cfg);
 
-uint8_t fpm_setpwd();
+uint8_t fpm_setpwd(uint32_t pwd);
+
+uint16_t fpm_getcount(void);
 
 #endif  /* FPM_H */
