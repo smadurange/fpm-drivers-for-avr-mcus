@@ -15,6 +15,8 @@ struct fpm_config {
 
 uint8_t fpm_init(void);
 
-uint8_t fpm_get_config(struct fpm_config *cfg);
+uint8_t fpm_getcfg(struct fpm_config *cfg);
+
+uint8_t fpm_setpwd();
 
 #endif  /* FPM_H */

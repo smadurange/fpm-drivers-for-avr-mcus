@@ -38,7 +38,7 @@ static inline void print_config(void)
 	char s[SLEN];
 	struct fpm_config cfg;
 
-	if (fpm_get_config(&cfg)) {
+	if (fpm_getcfg(&cfg)) {
 		uart_write("FPM config:");
 		snprintf(s, SLEN, "\tstatus: 0x%02X", cfg.status);
 		uart_write(s);
@@ -78,6 +78,8 @@ static inline void print_config(void)
 			uart_write("\tbaud: 105600");
 		else if (cfg.baud == 12)
 			uart_write("\tbaud: 115200");
+	} else {
+		uart_write("Valid FPM config not found");
 	}
 }
 
@@ -88,14 +90,9 @@ int main(void)
 	bit_set(DDRB,5);
 	sei();
 
-	if (fpm_init()) {
-		uart_write("FPM detected");
+	if (fpm_init())
 		print_config();
-	}
-	else
-		uart_write("FPM not detected");
 
-	
     while (1) 
     {	
 		_delay_ms(1000);

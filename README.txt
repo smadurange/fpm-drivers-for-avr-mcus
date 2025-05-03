@@ -8,3 +8,8 @@ Since ATmega328P has only one hardware UART, I'm using lynxzp's software UART
 implementation [1] for debugging purposes.
 
 [1] https://github.com/lynxzp/Software_UART_for_AVR
+
+BUILD
+
+make -FPM_PWD=$(pasword) hex
+

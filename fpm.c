@@ -7,10 +7,6 @@
 #define MAXPDLEN        64
 #define RST_DELAY_MS   500
 
-#define PWD           0x00
-
-#define CMD           0x01
-
 #define OK            0x00
 
 static uint8_t start_code[] = { 0xEF, 0x01 };
@@ -121,12 +117,12 @@ static inline uint8_t check_pwd(void)
 	uint8_t buf[MAXPDLEN];
 
 	buf[0] = 0x13;
-	buf[1] = (uint8_t)((uint32_t)PWD >> 24);
-	buf[2] = (uint8_t)((uint32_t)PWD >> 16);
-	buf[3] = (uint8_t)((uint32_t)PWD >> 8);
-	buf[4] = (uint8_t)((uint32_t)PWD & 0xFF);
+	buf[1] = (uint8_t)((uint32_t)FPM_PWD >> 24);
+	buf[2] = (uint8_t)((uint32_t)FPM_PWD >> 16);
+	buf[3] = (uint8_t)((uint32_t)FPM_PWD >> 8);
+	buf[4] = (uint8_t)((uint32_t)FPM_PWD & 0xFF);
 
-	send(CMD, buf, 5);
+	send(0x01, buf, 5);
 
 	n = 0;
 	recv(buf, &n);
@@ -146,19 +142,16 @@ uint8_t fpm_init(void)
 	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 
 	_delay_ms(RST_DELAY_MS);
-
 	return check_pwd();
 }
 
-uint8_t fpm_get_config(struct fpm_config *cfg)
+uint8_t fpm_getcfg(struct fpm_config *cfg)
 {
 	uint16_t n;
 	uint8_t buf[MAXPDLEN];
 
 	buf[0] = 0x0F;
-	send(CMD, buf, 1);
-
-	n = 0;
+	send(0x01, buf, 1);
 	recv(buf, &n);
 
 	if (buf[0] == OK && n >= 17) {
@@ -179,3 +172,18 @@ uint8_t fpm_get_config(struct fpm_config *cfg)
 	return 0;
 }
 
+uint8_t fpm_setpwd(uint32_t pwd)
+{
+	uint16_t n;
+	uint8_t buf[MAXPDLEN];
+
+	buf[0] = 0x12;
+	buf[1] = (uint8_t)((uint32_t)pwd >> 24);
+	buf[2] = (uint8_t)((uint32_t)pwd >> 16);
+	buf[3] = (uint8_t)((uint32_t)pwd >> 8);
+	buf[4] = (uint8_t)((uint32_t)pwd & 0xFF);
+
+	send(0x01, buf, 5);
+	recv(buf, &n);
+	return buf[0] == OK;
+}
