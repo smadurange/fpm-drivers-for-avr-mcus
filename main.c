@@ -100,30 +100,24 @@ int main(void)
 		snprintf(s, 30, "Template count: %d", template_count); 
 		uart_write(s);
 
-		uart_write("Enroll fingerprint");
-		_delay_ms(2000);
-		if (fpm_enroll()) {
-			uart_write("Enrolled fingerprint"); 
-		} else {
-			uart_write("Enrollment error");
+		if (template_count == 0) {
+			uart_write("Enroll fingerprint");
+			if (fpm_enroll()) {
+				uart_write("Enrolled fingerprint"); 
+			} else {
+				uart_write("Enrollment error");
+			}
+
+			template_count = fpm_getcount();
+			snprintf(s, 30, "New template count: %d", template_count); 
+			uart_write(s);
 		}
 
-		template_count = fpm_getcount();
-		snprintf(s, 30, "New template count: %d", template_count); 
-		uart_write(s);
-
-		//uart_write("Authentcate");
-		//_delay_ms(1000);
-		//
-		//do {
-		//	ismatch = fpm_match();
-		//	if (ismatch)
-		//		uart_write("Matched!");
-		//	else {
-		//		uart_write("No match!");
-		//		_delay_ms(1500);
-		//	}
-		//} while (!ismatch);
+		uart_write("Authentcating...");
+		if (fpm_match())
+			uart_write("Fingerprint match");
+		else
+			uart_write("No match");
 	}
 
     while (1) 
