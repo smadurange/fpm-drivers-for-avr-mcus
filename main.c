@@ -36,7 +36,7 @@ static inline void print_config(void)
 	const int SLEN = 25;
 
 	char s[SLEN];
-	struct fpm_config cfg;
+	struct fpm_cfg cfg;
 
 	if (fpm_getcfg(&cfg)) {
 		uart_write("FPM config:");
@@ -85,7 +85,8 @@ static inline void print_config(void)
 
 int main(void)
 {
-	char s[20];
+	char s[30];
+	uint8_t ismatch;
 	uint16_t template_count;
 
 	cli();
@@ -96,8 +97,33 @@ int main(void)
 	if (fpm_init()) {
 		print_config();
 		template_count = fpm_getcount();
-		snprintf(s, 20, "Template count: %d", template_count); 
+		snprintf(s, 30, "Template count: %d", template_count); 
 		uart_write(s);
+
+		uart_write("Enroll fingerprint");
+		_delay_ms(2000);
+		if (fpm_enroll()) {
+			uart_write("Enrolled fingerprint"); 
+		} else {
+			uart_write("Enrollment error");
+		}
+
+		template_count = fpm_getcount();
+		snprintf(s, 30, "New template count: %d", template_count); 
+		uart_write(s);
+
+		//uart_write("Authentcate");
+		//_delay_ms(1000);
+		//
+		//do {
+		//	ismatch = fpm_match();
+		//	if (ismatch)
+		//		uart_write("Matched!");
+		//	else {
+		//		uart_write("No match!");
+		//		_delay_ms(1500);
+		//	}
+		//} while (!ismatch);
 	}
 
     while (1) 

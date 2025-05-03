@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-struct fpm_config {
+struct fpm_cfg {
 	uint16_t status;
 	uint16_t sysid;
 	uint16_t cap;
@@ -15,10 +15,14 @@ struct fpm_config {
 
 uint8_t fpm_init(void);
 
-uint8_t fpm_getcfg(struct fpm_config *cfg);
+uint8_t fpm_getcfg(struct fpm_cfg *cfg);
 
 uint8_t fpm_setpwd(uint32_t pwd);
 
 uint16_t fpm_getcount(void);
+
+uint8_t fpm_enroll(void);
+
+uint8_t fpm_match(void);
 
 #endif  /* FPM_H */

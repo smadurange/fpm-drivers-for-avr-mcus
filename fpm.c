@@ -129,6 +129,24 @@ static inline uint8_t check_pwd(void)
 	return buf[0] == OK;
 }
 
+static inline void scan(uint8_t bufid)
+{
+	uint16_t n;
+	uint8_t buf[MAXPDLEN];
+
+	do {
+		buf[0] = 0x01;
+		send(0x01, buf, 1);
+		recv(buf, &n);
+		if (buf[0] == OK) {
+			buf[0] = 0x02;
+			buf[1] = bufid;
+			send(0x01, buf, 2);
+			recv(buf, &n);
+		}
+	} while (buf[0] != OK);
+}
+
 uint8_t fpm_init(void)
 {
 	UBRR0H = UBRRH_VALUE;
@@ -145,7 +163,7 @@ uint8_t fpm_init(void)
 	return check_pwd();
 }
 
-uint8_t fpm_getcfg(struct fpm_config *cfg)
+uint8_t fpm_getcfg(struct fpm_cfg *cfg)
 {
 	uint16_t n;
 	uint8_t buf[MAXPDLEN];
@@ -204,4 +222,41 @@ uint16_t fpm_getcount(void)
 		count |= buf[2];
 	}
 	return count;
+}
+
+uint8_t fpm_enroll(void)
+{
+	uint16_t n, retries;
+	uint8_t buf[MAXPDLEN];
+	
+	retries = 0;
+	do {
+		_delay_ms(100);
+		buf[0] = 0x10;
+		send(0x01, buf, 1);
+		recv(buf, &n);
+		retries++;
+	} while (buf[0] != OK && retries < 50);
+	
+	return buf[0] == OK;
+}
+
+uint8_t fpm_match(void)
+{
+	uint16_t n, count;
+	uint8_t buf[MAXPDLEN];
+
+	scan(1);
+	count = fpm_getcount();
+
+	buf[0] = 0x04;
+	buf[1] = 1;
+	buf[2] = 0x00;
+	buf[3] = 0x00;
+	buf[4] = (uint8_t)(count >> 8);
+	buf[5] = (uint8_t)(count & 0xFF);
+
+	send(0x01, buf, 6);
+	recv(buf, &n);
+	return buf[0] == OK;
 }
