@@ -240,3 +240,14 @@ uint8_t fpm_match(void)
 
 	return buf[0] == OK;
 }
+
+uint8_t fpm_delete_all(void)
+{
+	uint16_t n;
+	uint8_t buf[MAXPDLEN];
+
+	buf[0] = 0x0D;
+	send(0x01, buf, 1);
+	recv(buf, &n);
+	return buf[0] == OK;
+}

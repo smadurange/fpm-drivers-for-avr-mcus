@@ -25,4 +25,6 @@ uint8_t fpm_enroll(void);
 
 uint8_t fpm_match(void);
 
+uint8_t fpm_delete_all(void);
+
 #endif  /* FPM_H */
