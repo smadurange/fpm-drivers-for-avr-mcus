@@ -236,7 +236,8 @@ uint8_t fpm_match(void)
 		buf[0] = 0x11;
 		send(0x01, buf, 1);
 		recv(buf, &n);
-	} while (buf[0] != OK && retries < 50);
+		retries++;
+	} while (buf[0] != OK && retries < 10);
 
 	return buf[0] == OK;
 }
