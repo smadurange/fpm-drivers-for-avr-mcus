@@ -126,20 +126,30 @@ static inline uint8_t check_pwd(void)
 	return buf[0] == OK;
 }
 
-static inline uint8_t aura_on(void)
+void fpm_led_on(FPM_LED_COLOR color)
 {
-	unsigned int n;
-	uint8_t buf[MAXPDLEN];
+	uint8_t buf[5];
 	
 	buf[0] = 0x35;
-	buf[1] = 0x01;
-	buf[2] = 0x20;
-	buf[3] = 0x03;
+	buf[1] = 0x03;
+	buf[2] = 0x00;
+	buf[3] = color;
 	buf[4] = 0x00;
 
 	send(0x01, buf, 5);	
-	recv(buf, &n);
-	return buf[0] == OK;
+}
+
+void fpm_led_off(void)
+{
+	uint8_t buf[5];
+	
+	buf[0] = 0x35;
+	buf[1] = 0x04;
+	buf[2] = 0x00;
+	buf[3] = 0x00;
+	buf[4] = 0x00;
+
+	send(0x01, buf, 5);	
 }
 
 uint8_t fpm_init(void)
@@ -155,7 +165,6 @@ uint8_t fpm_init(void)
 	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 
 	_delay_ms(RST_DELAY_MS);
-	aura_on();
-	return check_pwd();
+	return 1;
 }
 
