@@ -1,8 +1,7 @@
 CC = avr-gcc
 MCU = atmega328p
 PORT = /dev/cuaU0
-TARGET = fend
-FPM_NEWPWD = 0x00
+TARGET = app
 
 SRC = main.c fpm.c
 OBJ = $(SRC:.c=.o)
@@ -13,7 +12,6 @@ CFLAGS += -Wall
 CFLAGS += -mmcu=$(MCU)
 CFLAGS += -DBAUD=57600
 CFLAGS += -DF_CPU=16000000UL
-CFLAGS += -DDEBUG=0
 CFLAGS += -DFPM_PWD=$(FPM_PWD)
 CFLAGS += -ffunction-sections -fdata-sections
 
