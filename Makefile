@@ -3,7 +3,7 @@ MCU = atmega328p
 PORT = /dev/cuaU0
 TARGET = app
 
-SRC = main.c fpm.c
+SRC = main.c r503.c
 OBJ = $(SRC:.c=.o)
 
 CFLAGS = -std=gnu99

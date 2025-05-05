@@ -1,16 +1,45 @@
+
+#define bit_clr(a,b) ((a) &=~(1<<(b)))
+#define bit_set(a,b) ((a) |= (1<<(b)))
+#define bit_tst(a,b) ((a) & (1<<(b)))
+#define bit_change(a,b) ((a) ^= (1<<(b)))
+
+#include <stdio.h>
+
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <util/delay.h>
+
+#define Soft_UART_TX_PORT PORTD
+#define Soft_UART_TX_DDR DDRD
+#define Soft_UART_TX_PIN 3
+#define Soft_UART_Baud 9600
+#include "Soft_UART_Timer1.h"
+
 #include <avr/io.h>
 #include <util/delay.h>
 #include <util/setbaud.h>
 
 #include "fpm.h"
 
-#define MAXPDLEN        64
-#define RST_DELAY_MS   500
+#define MAXPDLEN              64
+#define RST_DELAY_MS         500
 
-#define OK            0x00
+#define HEADER_HO           0xEF
+#define HEADER_LO           0x01
+#define ADDR          0xFFFFFFFF
 
-static uint8_t start_code[] = { 0xEF, 0x01 };
-static uint8_t addr[] = { 0xFF, 0xFF, 0xFF, 0xFF };
+#define OK                  0x00
+
+static inline void uart_write(const char *s)
+{
+	for (; *s; s++) {
+		Soft_UART_send_byte(*s);
+	}
+	Soft_UART_send_byte('\r');
+	Soft_UART_send_byte('\n');
+}
+
 
 static inline uint8_t read(void)
 {
@@ -26,28 +55,26 @@ static inline void write(uint8_t c)
 	UDR0 = c;
 }
 
-static inline void write_bulk(uint8_t *data, uint16_t n)
-{
-	int i;
-
-	for (i = 0; i < n; i++)
-		write(data[i]);
-}
-
-static inline void send(uint8_t pktid, uint8_t *data, uint8_t n)
+static inline void send(uint8_t pid, uint8_t *data, uint8_t n)
 {
 	int i;
 	uint16_t pktlen, sum;
 
-	write_bulk(start_code, 2);
-	write_bulk(addr, 4);
-	write(pktid);
+	write(HEADER_HO);
+	write(HEADER_LO);
 
-	pktlen = n + 3;
+	write((uint8_t)(ADDR >> 24));
+	write((uint8_t)(ADDR >> 16));
+	write((uint8_t)(ADDR >> 8));
+	write((uint8_t)(ADDR & 0xFF));
+
+	write(pid);
+
+	pktlen = n + 2;
 	write((uint8_t)(pktlen >> 8));
 	write((uint8_t)pktlen);
 
-	sum = (pktlen >> 8) + (pktlen & 0xFF) + pktid;
+	sum = (pktlen >> 8) + (pktlen & 0xFF) + pid;
 	for (i = 0; i < n; i++) {
 		write(data[i]);
 		sum += data[i];
@@ -69,11 +96,11 @@ static inline void recv(uint8_t buf[MAXPDLEN], uint16_t *n)
 		byte = read();
 		switch (i) {
 		case 0:
-			if (byte != start_code[0])
+			if (byte != HEADER_HO)
 				continue;
 			break;
 		case 1:
-			if (byte != start_code[1])
+			if (byte != HEADER_LO)
 				goto bad_pkt;
 			break;
 		case 2:
@@ -127,14 +154,14 @@ static inline uint8_t check_pwd(void)
 	return buf[0] == OK;
 }
 
-static inline void uint8_t aura_on(void)
+static inline uint8_t aura_on(void)
 {
 	unsigned int n;
 	uint8_t buf[MAXPDLEN];
 	
 	buf[0] = 0x35;
 	buf[1] = 0x01;
-	buf[2] = 0x00;
+	buf[2] = 0x20;
 	buf[3] = 0x01;
 	buf[4] = 0x00;
 
@@ -145,6 +172,11 @@ static inline void uint8_t aura_on(void)
 
 uint8_t fpm_init(void)
 {
+	cli();
+	Soft_UART_init();
+	bit_set(DDRB,5);
+	sei();
+
 	UBRR0H = UBRRH_VALUE;
 	UBRR0L = UBRRL_VALUE;
 #if USE_2X
@@ -266,4 +298,54 @@ uint8_t fpm_delete_all(void)
 	send(0x01, buf, 1);
 	recv(buf, &n);
 	return buf[0] == OK;
+}
+
+static inline void print_config(void)
+{
+	const int SLEN = 25;
+
+	char s[SLEN];
+	struct fpm_cfg cfg;
+
+	if (fpm_getcfg(&cfg)) {
+		uart_write("FPM config:");
+		snprintf(s, SLEN, "\tstatus: 0x%02X", cfg.status);
+		uart_write(s);
+		snprintf(s, SLEN, "\tsysid: 0x%02X", cfg.sysid);
+		uart_write(s);
+		snprintf(s, SLEN, "\tcap: %d", cfg.cap);
+		uart_write(s);
+		snprintf(s, SLEN, "\tsec: %d", cfg.sec_level);
+		uart_write(s);
+		snprintf(s, SLEN, "\taddr: 0x%02X%02X%02X%02X", cfg.addr[0], 
+			cfg.addr[1], cfg.addr[2], cfg.addr[3]);
+		uart_write(s);
+		snprintf(s, SLEN, "\tpkt size: %d", cfg.pkt_size);
+		uart_write(s);
+	
+		if (cfg.baud == 1)
+			uart_write("\tbaud: 9600");
+		else if (cfg.baud == 2)
+			uart_write("\tbaud: 19200");
+		else if (cfg.baud == 3)
+			uart_write("\tbaud: 28800");
+		else if (cfg.baud == 4)
+			uart_write("\tbaud: 38400");
+		else if (cfg.baud == 5)
+			uart_write("\tbaud: 48000");
+		else if (cfg.baud == 6)
+			uart_write("\tbaud: 57600");
+		else if (cfg.baud == 7)
+			uart_write("\tbaud: 67200");
+		else if (cfg.baud == 8)
+			uart_write("\tbaud: 76800");
+		else if (cfg.baud == 9)
+			uart_write("\tbaud: 86400");
+		else if (cfg.baud == 10)
+			uart_write("\tbaud: 96000");
+		else if (cfg.baud == 11)
+			uart_write("\tbaud: 105600");
+		else if (cfg.baud == 12)
+			uart_write("\tbaud: 115200");
+	}
 }
