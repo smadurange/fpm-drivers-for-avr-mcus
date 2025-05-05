@@ -1,26 +1,8 @@
-
-#define bit_clr(a,b) ((a) &=~(1<<(b)))
-#define bit_set(a,b) ((a) |= (1<<(b)))
-#define bit_tst(a,b) ((a) & (1<<(b)))
-#define bit_change(a,b) ((a) ^= (1<<(b)))
-
-#include <stdio.h>
-
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <util/delay.h>
-
-#define Soft_UART_TX_PORT PORTD
-#define Soft_UART_TX_DDR DDRD
-#define Soft_UART_TX_PIN 3
-#define Soft_UART_Baud 9600
-#include "Soft_UART_Timer1.h"
-
 #include <avr/io.h>
 #include <util/delay.h>
 #include <util/setbaud.h>
 
-#include "fpm.h"
+#include "r503.h"
 
 #define MAXPDLEN              64
 #define RST_DELAY_MS         500
@@ -30,16 +12,6 @@
 #define ADDR          0xFFFFFFFF
 
 #define OK                  0x00
-
-static inline void uart_write(const char *s)
-{
-	for (; *s; s++) {
-		Soft_UART_send_byte(*s);
-	}
-	Soft_UART_send_byte('\r');
-	Soft_UART_send_byte('\n');
-}
-
 
 static inline uint8_t read(void)
 {
@@ -162,7 +134,7 @@ static inline uint8_t aura_on(void)
 	buf[0] = 0x35;
 	buf[1] = 0x01;
 	buf[2] = 0x20;
-	buf[3] = 0x01;
+	buf[3] = 0x03;
 	buf[4] = 0x00;
 
 	send(0x01, buf, 5);	
@@ -172,11 +144,6 @@ static inline uint8_t aura_on(void)
 
 uint8_t fpm_init(void)
 {
-	cli();
-	Soft_UART_init();
-	bit_set(DDRB,5);
-	sei();
-
 	UBRR0H = UBRRH_VALUE;
 	UBRR0L = UBRRL_VALUE;
 #if USE_2X
@@ -192,160 +159,3 @@ uint8_t fpm_init(void)
 	return check_pwd();
 }
 
-uint8_t fpm_getcfg(struct fpm_cfg *cfg)
-{
-	uint16_t n;
-	uint8_t buf[MAXPDLEN];
-
-	buf[0] = 0x0F;
-	send(0x01, buf, 1);
-	recv(buf, &n);
-
-	if (buf[0] == OK && n >= 17) {
-		cfg->status = ((uint16_t)buf[1] << 8) | buf[2];
-		cfg->sysid = ((uint16_t)buf[3] << 8) | buf[4];
-		cfg->cap = ((uint16_t)buf[5] << 8) | buf[6];
-		cfg->sec_level = ((uint16_t)buf[7] << 8) | buf[8];
-		cfg->addr[0] = buf[9];
-		cfg->addr[1] = buf[10];
-		cfg->addr[2] = buf[11];
-		cfg->addr[3] = buf[12];
-		cfg->pkt_size = ((uint16_t)buf[13] << 8) | buf[14];
-		cfg->pkt_size = 1 << (cfg->pkt_size + 5); 
-		cfg->baud = (((uint16_t)buf[15] << 8) | buf[16]);
-
-		return 1;
-	}
-	return 0;
-}
-
-uint8_t fpm_setpwd(uint32_t pwd)
-{
-	uint16_t n;
-	uint8_t buf[MAXPDLEN];
-
-	buf[0] = 0x12;
-	buf[1] = (uint8_t)(pwd >> 24);
-	buf[2] = (uint8_t)(pwd >> 16);
-	buf[3] = (uint8_t)(pwd >> 8);
-	buf[4] = (uint8_t)(pwd & 0xFF);
-
-	send(0x01, buf, 5);
-	recv(buf, &n);
-	return buf[0] == OK;
-}
-
-uint16_t fpm_getcount(void)
-{
-	uint16_t n, count;
-	uint8_t buf[MAXPDLEN];
-
-	buf[0] = 0x1D;
-	send(0x01, buf, 1);
-	recv(buf, &n);
-
-	count = 0;
-	if (buf[0] == OK && n >= 2) {
-		count = buf[1];
-		count <<= 8;
-		count |= buf[2];
-	}
-	return count;
-}
-
-uint8_t fpm_enroll(void)
-{
-	uint16_t n, retries;
-	uint8_t buf[MAXPDLEN];
-	
-	retries = 0;
-
-	do {
-		_delay_ms(100);
-		buf[0] = 0x10;
-		send(0x01, buf, 1);
-		recv(buf, &n);
-		retries++;
-	} while (buf[0] != OK && retries < 50);
-	
-	return buf[0] == OK;
-}
-
-uint8_t fpm_match(void)
-{
-	uint16_t n, retries;
-	uint8_t buf[MAXPDLEN];
-
-	retries = 0;
-	
-	do {
-		_delay_ms(100);
-		buf[0] = 0x11;
-		send(0x01, buf, 1);
-		recv(buf, &n);
-		retries++;
-	} while (buf[0] != OK && retries < 10);
-
-	return buf[0] == OK;
-}
-
-uint8_t fpm_delete_all(void)
-{
-	uint16_t n;
-	uint8_t buf[MAXPDLEN];
-
-	buf[0] = 0x0D;
-	send(0x01, buf, 1);
-	recv(buf, &n);
-	return buf[0] == OK;
-}
-
-static inline void print_config(void)
-{
-	const int SLEN = 25;
-
-	char s[SLEN];
-	struct fpm_cfg cfg;
-
-	if (fpm_getcfg(&cfg)) {
-		uart_write("FPM config:");
-		snprintf(s, SLEN, "\tstatus: 0x%02X", cfg.status);
-		uart_write(s);
-		snprintf(s, SLEN, "\tsysid: 0x%02X", cfg.sysid);
-		uart_write(s);
-		snprintf(s, SLEN, "\tcap: %d", cfg.cap);
-		uart_write(s);
-		snprintf(s, SLEN, "\tsec: %d", cfg.sec_level);
-		uart_write(s);
-		snprintf(s, SLEN, "\taddr: 0x%02X%02X%02X%02X", cfg.addr[0], 
-			cfg.addr[1], cfg.addr[2], cfg.addr[3]);
-		uart_write(s);
-		snprintf(s, SLEN, "\tpkt size: %d", cfg.pkt_size);
-		uart_write(s);
-	
-		if (cfg.baud == 1)
-			uart_write("\tbaud: 9600");
-		else if (cfg.baud == 2)
-			uart_write("\tbaud: 19200");
-		else if (cfg.baud == 3)
-			uart_write("\tbaud: 28800");
-		else if (cfg.baud == 4)
-			uart_write("\tbaud: 38400");
-		else if (cfg.baud == 5)
-			uart_write("\tbaud: 48000");
-		else if (cfg.baud == 6)
-			uart_write("\tbaud: 57600");
-		else if (cfg.baud == 7)
-			uart_write("\tbaud: 67200");
-		else if (cfg.baud == 8)
-			uart_write("\tbaud: 76800");
-		else if (cfg.baud == 9)
-			uart_write("\tbaud: 86400");
-		else if (cfg.baud == 10)
-			uart_write("\tbaud: 96000");
-		else if (cfg.baud == 11)
-			uart_write("\tbaud: 105600");
-		else if (cfg.baud == 12)
-			uart_write("\tbaud: 115200");
-	}
-}

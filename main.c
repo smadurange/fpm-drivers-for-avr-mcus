@@ -1,9 +1,4 @@
-/*
- * example_usage.c
- *
- */ 
-
-#include "fpm.h"
+#include "r503.h"
 
 int main(void)
 {
