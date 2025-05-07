@@ -163,6 +163,18 @@ static inline uint8_t scan(void)
 	return buf[0] == OK;
 }
 
+static inline uint8_t img2tz(uint8_t bufid)
+{
+	uint16_t n;
+	uint8_t buf[MAXPDLEN];
+	
+	buf[0] = 0x02;	
+	buf[1] = bufid;
+	send(0x01, buf, 2);
+	recv(buf, &n);
+	return buf[0] == OK;
+}
+
 void fpm_led_on(COLOR color)
 {
 	led_ctrl(0x03, color);
@@ -245,14 +257,37 @@ uint16_t fpm_get_count(void)
 	return count;
 }
 
-uint8_t fpm_enroll(void)
+uint8_t fpm_enroll(uint16_t id)
 {
-	uint16_t n, retries;
-	uint8_t buf[MAXPDLEN], led;
-	
-	if (scan())	{
-		
-	}
+	uint16_t n;
+	uint8_t buf[MAXPDLEN];
 
-	return 0;
+	if (!scan())
+		return 0;
+
+	if (!img2tz(1))
+		return 0;
+	
+	_delay_ms(2000);
+
+	if (!scan())
+		return 0;
+
+	if (!img2tz(2))
+		return 0;
+
+	buf[0] = 0x05;
+	send(0x01, buf, 1);
+	recv(buf, &n);
+	if (buf[0] != OK)
+		return 0;
+
+	buf[0] = 0x06;
+	buf[1] = 1;
+	buf[2] = (uint8_t)(id >> 8);
+	buf[3] = (uint8_t)(id & 0xFF);
+	send(0x01, buf, 4);
+	recv(buf, &n);
+
+	return buf[0] == OK;
 }

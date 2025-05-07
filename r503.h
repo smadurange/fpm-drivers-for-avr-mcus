@@ -31,6 +31,6 @@ uint8_t fpm_clear_db(void);
 
 uint16_t fpm_get_count(void);
 
-uint8_t fpm_enroll(void);
+uint8_t fpm_enroll(uint16_t id);
 
 #endif /* FPM_R50_H */

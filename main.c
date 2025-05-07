@@ -33,14 +33,30 @@ static inline void uart_write(const char *s)
 
 int main(void)
 {
+	struct fpm_cfg cfg;
+
 	cli();
 	Soft_UART_init();
 	bit_set(DDRB,5);
 	sei();
 	
 	fpm_init();
+	fpm_get_cfg(&cfg);
+	fpm_clear_db();
+
 	if (fpm_get_count() == 0) {
-		fpm_enroll();
+		// todo: check againstr capacity in prod
+		if (fpm_enroll(1)) {
+			fpm_led_on(BLUE);
+			_delay_ms(500);
+			fpm_led_off();
+			_delay_ms(500);
+		} else {
+			fpm_led_on(RED);
+			_delay_ms(500);
+			fpm_led_off();
+			_delay_ms(500);
+		}
 	}
 
     while (1) 
