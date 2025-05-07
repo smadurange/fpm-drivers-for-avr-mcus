@@ -150,7 +150,7 @@ static inline uint8_t scan(void)
 	led_ctrl(0x01, PURPLE);
 
 	do {
-		buf[0] = 0x01;
+		buf[0] = 0x28;
 		send(0x01, buf, 1);
 		recv(buf, &n);
 		if (buf[0] != OK) {
@@ -159,7 +159,7 @@ static inline uint8_t scan(void)
 		}
 	} while(buf[0] != OK && retries < 100);
 
-	fpm_led_off();
+	led_ctrl(0x06, PURPLE);
 	return buf[0] == OK;
 }
 
@@ -250,8 +250,9 @@ uint8_t fpm_enroll(void)
 	uint16_t n, retries;
 	uint8_t buf[MAXPDLEN], led;
 	
-	if (!scan())	
-		return 0;
+	if (scan())	{
+		
+	}
 
-	return 1;
+	return 0;
 }
