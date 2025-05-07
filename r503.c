@@ -12,6 +12,7 @@
 #define ADDR          0xFFFFFFFF
 
 #define OK                  0x00
+#define PACKID              0x01
 
 static inline uint8_t read(void)
 {
@@ -27,7 +28,7 @@ static inline void write(uint8_t c)
 	UDR0 = c;
 }
 
-static inline void send(uint8_t pid, uint8_t *data, uint8_t n)
+static inline void send(uint8_t *data, uint8_t n)
 {
 	int i;
 	uint16_t pktlen, sum;
@@ -40,13 +41,13 @@ static inline void send(uint8_t pid, uint8_t *data, uint8_t n)
 	write((uint8_t)(ADDR >> 8));
 	write((uint8_t)(ADDR & 0xFF));
 
-	write(pid);
+	write(PACKID);
 
 	pktlen = n + 2;
 	write((uint8_t)(pktlen >> 8));
 	write((uint8_t)pktlen);
 
-	sum = (pktlen >> 8) + (pktlen & 0xFF) + pid;
+	sum = (pktlen >> 8) + (pktlen & 0xFF) + PACKID;
 	for (i = 0; i < n; i++) {
 		write(data[i]);
 		sum += data[i];
@@ -121,7 +122,7 @@ static inline void led_ctrl(uint8_t mode, COLOR color)
 	buf[3] = color;
 	buf[4] = 0x00;
 
-	send(0x01, buf, 5);	
+	send(buf, 5);	
 	recv(buf, &n);
 }
 
@@ -136,7 +137,7 @@ static inline uint8_t check_pwd(void)
 	buf[3] = (uint8_t)((uint32_t)FPM_PWD >> 8);
 	buf[4] = (uint8_t)((uint32_t)FPM_PWD & 0xFF);
 
-	send(0x01, buf, 5);
+	send(buf, 5);
 	recv(buf, &n);
 	return buf[0] == OK;
 }
@@ -151,7 +152,7 @@ static inline uint8_t scan(void)
 
 	do {
 		buf[0] = 0x28;
-		send(0x01, buf, 1);
+		send(buf, 1);
 		recv(buf, &n);
 		if (buf[0] != OK) {
 			retries++;
@@ -170,7 +171,7 @@ static inline uint8_t img2tz(uint8_t bufid)
 	
 	buf[0] = 0x02;	
 	buf[1] = bufid;
-	send(0x01, buf, 2);
+	send(buf, 2);
 	recv(buf, &n);
 	return buf[0] == OK;
 }
@@ -207,7 +208,7 @@ uint8_t fpm_get_cfg(struct fpm_cfg *cfg)
 	uint8_t buf[MAXPDLEN];
 
 	buf[0] = 0x0F;
-	send(0x01, buf, 1);
+	send(buf, 1);
 	recv(buf, &n);
 
 	if (buf[0] == OK && n >= 17) {
@@ -239,7 +240,7 @@ uint8_t fpm_set_pwd(uint32_t pwd)
 	buf[3] = (uint8_t)(pwd >> 8);
 	buf[4] = (uint8_t)(pwd & 0xFF);
 
-	send(0x01, buf, 5);
+	send(buf, 5);
 	recv(buf, &n);
 	return buf[0] == OK;
 }
@@ -250,7 +251,7 @@ uint16_t fpm_get_count(void)
 	uint8_t buf[MAXPDLEN];
 
 	buf[0] = 0x1D;
-	send(0x01, buf, 1);
+	send(buf, 1);
 	recv(buf, &n);
 
 	count = 0;
@@ -282,7 +283,7 @@ uint8_t fpm_enroll(uint16_t id)
 		return 0;
 
 	buf[0] = 0x05;
-	send(0x01, buf, 1);
+	send(buf, 1);
 	recv(buf, &n);
 	if (buf[0] != OK)
 		return 0;
@@ -291,7 +292,7 @@ uint8_t fpm_enroll(uint16_t id)
 	buf[1] = 1;
 	buf[2] = (uint8_t)(id >> 8);
 	buf[3] = (uint8_t)(id & 0xFF);
-	send(0x01, buf, 4);
+	send(buf, 4);
 	recv(buf, &n);
 
 	return buf[0] == OK;
@@ -319,7 +320,7 @@ uint8_t fpm_match(void)
 	buf[4] = (uint8_t)(cfg.cap >> 8);
 	buf[5] = (uint8_t)(cfg.cap & 0xFF);
 	
-	send(0x01, buf, 6);
+	send(buf, 6);
 	recv(buf, &n);
 	return buf[0] == OK;
 }
@@ -330,7 +331,7 @@ uint8_t fpm_clear_db(void)
 	uint8_t buf[MAXPDLEN];
 
 	buf[0] = 0x0D;
-	send(0x01, buf, 1);
+	send(buf, 1);
 	recv(buf, &n);
 	return buf[0] == OK;
 }
