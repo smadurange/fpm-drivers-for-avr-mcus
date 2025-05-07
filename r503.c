@@ -117,7 +117,7 @@ static inline void led_ctrl(uint8_t mode, COLOR color)
 	
 	buf[0] = 0x35;
 	buf[1] = mode;
-	buf[2] = 0x40;
+	buf[2] = 0x60;
 	buf[3] = color;
 	buf[4] = 0x00;
 
