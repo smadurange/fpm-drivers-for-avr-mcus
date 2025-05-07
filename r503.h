@@ -23,14 +23,18 @@ uint8_t fpm_init(void);
 
 uint8_t fpm_get_cfg(struct fpm_cfg *cfg);
 
+uint8_t fpm_set_pwd(uint32_t pwd);
+
 void fpm_led_on(COLOR color);
 
 void fpm_led_off(void);
 
-uint8_t fpm_clear_db(void);
-
 uint16_t fpm_get_count(void);
 
 uint8_t fpm_enroll(uint16_t id);
+
+uint8_t fpm_match(void);
+
+uint8_t fpm_clear_db(void);
 
 #endif /* FPM_R50_H */

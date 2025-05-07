@@ -228,13 +228,18 @@ uint8_t fpm_get_cfg(struct fpm_cfg *cfg)
 	return 0;
 }
 
-uint8_t fpm_clear_db(void)
+uint8_t fpm_set_pwd(uint32_t pwd)
 {
 	uint16_t n;
 	uint8_t buf[MAXPDLEN];
 
-	buf[0] = 0x0D;
-	send(0x01, buf, 1);
+	buf[0] = 0x12;
+	buf[1] = (uint8_t)(pwd >> 24);
+	buf[2] = (uint8_t)(pwd >> 16);
+	buf[3] = (uint8_t)(pwd >> 8);
+	buf[4] = (uint8_t)(pwd & 0xFF);
+
+	send(0x01, buf, 5);
 	recv(buf, &n);
 	return buf[0] == OK;
 }
@@ -289,5 +294,43 @@ uint8_t fpm_enroll(uint16_t id)
 	send(0x01, buf, 4);
 	recv(buf, &n);
 
+	return buf[0] == OK;
+}
+
+uint8_t fpm_match(void)
+{
+	struct fpm_cfg cfg;
+	uint16_t n;
+	uint8_t buf[MAXPDLEN];
+
+	if (!fpm_get_cfg(&cfg))
+		return 0;
+	
+	if (!scan())
+		return 0;
+
+	if (!img2tz(1))
+		return 0;
+
+	buf[0] = 0x04;
+	buf[1] = 1;
+	buf[2] = 0x00;
+	buf[3] = 0x00;
+	buf[4] = (uint8_t)(cfg.cap >> 8);
+	buf[5] = (uint8_t)(cfg.cap & 0xFF);
+	
+	send(0x01, buf, 6);
+	recv(buf, &n);
+	return buf[0] == OK;
+}
+
+uint8_t fpm_clear_db(void)
+{
+	uint16_t n;
+	uint8_t buf[MAXPDLEN];
+
+	buf[0] = 0x0D;
+	send(0x01, buf, 1);
+	recv(buf, &n);
 	return buf[0] == OK;
 }

@@ -42,10 +42,9 @@ int main(void)
 	
 	fpm_init();
 	fpm_get_cfg(&cfg);
-	fpm_clear_db();
 
 	if (fpm_get_count() == 0) {
-		// todo: check againstr capacity in prod
+		// todo: check against capacity in prod
 		if (fpm_enroll(1)) {
 			fpm_led_on(BLUE);
 			_delay_ms(500);
@@ -61,6 +60,14 @@ int main(void)
 
     while (1) 
     {	
+		if (fpm_match()) {
+			fpm_led_on(BLUE);
+			_delay_ms(500);
+			fpm_led_off();
+			_delay_ms(500);
+		}
+
+		_delay_ms(2000);
     }
 
 	return 0;
