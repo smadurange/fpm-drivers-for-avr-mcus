@@ -57,7 +57,7 @@ static inline void send(uint8_t *data, uint8_t n)
 	write((uint8_t)sum);
 }
 
-static inline void recv(uint8_t buf[MAXPDLEN], uint16_t *n)
+static inline uint16_t recv(uint8_t buf[MAXPDLEN])
 {
 	int i;
 	uint16_t len;
@@ -74,16 +74,15 @@ static inline void recv(uint8_t buf[MAXPDLEN], uint16_t *n)
 			break;
 		case 1:
 			if (byte != HEADER_LO)
-				goto bad_pkt;
-			break;
+				return 0;
 		case 2:
 		case 3:
 		case 4:
 		case 5:
-			// toss the address
+			// toss address
 			break;
 		case 6:
-			// toss the packet id
+			// toss packet id
 			break;
 		case 7:
 			len = (uint16_t)byte << 8;
@@ -94,26 +93,19 @@ static inline void recv(uint8_t buf[MAXPDLEN], uint16_t *n)
 		default:
 			if ((i - 9) < MAXPDLEN) {
 				buf[i - 9] = byte;
-				if ((i - 8) == len) {
-					*n = len;
-					return;
-				}
-			} else {
-				goto bad_pkt;
-			}
+				if ((i - 8) == len)
+					return len;
+			} else
+				return 0;
 			break;
 		}
 		i++;
 	}
-
-bad_pkt:
-	*n = 0;
-	return;
+	return 0;
 }
 
 static inline void led_ctrl(uint8_t mode, COLOR color)
 {
-	uint16_t n;
 	uint8_t buf[MAXPDLEN];
 	
 	buf[0] = 0x35;
@@ -123,12 +115,11 @@ static inline void led_ctrl(uint8_t mode, COLOR color)
 	buf[4] = 0x00;
 
 	send(buf, 5);	
-	recv(buf, &n);
+	recv(buf);
 }
 
 static inline uint8_t check_pwd(void)
 {
-	unsigned int n;
 	uint8_t buf[MAXPDLEN];
 
 	buf[0] = 0x13;
@@ -138,13 +129,13 @@ static inline uint8_t check_pwd(void)
 	buf[4] = (uint8_t)((uint32_t)FPM_PWD & 0xFF);
 
 	send(buf, 5);
-	recv(buf, &n);
+	recv(buf);
 	return buf[0] == OK;
 }
 
 static inline uint8_t scan(void)
 {
-	uint16_t n, retries;
+	uint16_t retries;
 	uint8_t buf[MAXPDLEN];
 	
 	retries = 0;
@@ -153,7 +144,7 @@ static inline uint8_t scan(void)
 	do {
 		buf[0] = 0x28;
 		send(buf, 1);
-		recv(buf, &n);
+		recv(buf);
 		if (buf[0] != OK) {
 			retries++;
 			_delay_ms(100);
@@ -166,13 +157,12 @@ static inline uint8_t scan(void)
 
 static inline uint8_t img2tz(uint8_t bufid)
 {
-	uint16_t n;
 	uint8_t buf[MAXPDLEN];
 	
 	buf[0] = 0x02;	
 	buf[1] = bufid;
 	send(buf, 2);
-	recv(buf, &n);
+	recv(buf);
 	return buf[0] == OK;
 }
 
@@ -209,7 +199,7 @@ uint8_t fpm_get_cfg(struct fpm_cfg *cfg)
 
 	buf[0] = 0x0F;
 	send(buf, 1);
-	recv(buf, &n);
+	n = recv(buf);
 
 	if (buf[0] == OK && n >= 17) {
 		cfg->status = ((uint16_t)buf[1] << 8) | buf[2];
@@ -231,7 +221,6 @@ uint8_t fpm_get_cfg(struct fpm_cfg *cfg)
 
 uint8_t fpm_set_pwd(uint32_t pwd)
 {
-	uint16_t n;
 	uint8_t buf[MAXPDLEN];
 
 	buf[0] = 0x12;
@@ -241,7 +230,7 @@ uint8_t fpm_set_pwd(uint32_t pwd)
 	buf[4] = (uint8_t)(pwd & 0xFF);
 
 	send(buf, 5);
-	recv(buf, &n);
+	recv(buf);
 	return buf[0] == OK;
 }
 
@@ -252,7 +241,7 @@ uint16_t fpm_get_count(void)
 
 	buf[0] = 0x1D;
 	send(buf, 1);
-	recv(buf, &n);
+	n = recv(buf);
 
 	count = 0;
 	if (buf[0] == OK && n >= 2) {
@@ -266,12 +255,12 @@ uint16_t fpm_get_count(void)
 uint8_t fpm_enroll(void)
 {
 	struct fpm_cfg cfg;
-	uint16_t n, id;
+	uint16_t n;
 	uint8_t buf[MAXPDLEN];
 
 	fpm_get_cfg(&cfg);
-	id = fpm_get_count();
-	if (n == cfg.cap)
+	n = fpm_get_count();
+	if (n >= cfg.cap)
 		return 0;
 
 	if (!scan())
@@ -290,16 +279,16 @@ uint8_t fpm_enroll(void)
 
 	buf[0] = 0x05;
 	send(buf, 1);
-	recv(buf, &n);
+	recv(buf);
 	if (buf[0] != OK)
 		return 0;
 
 	buf[0] = 0x06;
 	buf[1] = 1;
-	buf[2] = (uint8_t)(id >> 8);
-	buf[3] = (uint8_t)(id & 0xFF);
+	buf[2] = (uint8_t)(n >> 8);
+	buf[3] = (uint8_t)(n & 0xFF);
 	send(buf, 4);
-	recv(buf, &n);
+	recv(buf);
 
 	return buf[0] == OK;
 }
@@ -307,7 +296,6 @@ uint8_t fpm_enroll(void)
 uint8_t fpm_match(void)
 {
 	struct fpm_cfg cfg;
-	uint16_t n;
 	uint8_t buf[MAXPDLEN];
 
 	if (!fpm_get_cfg(&cfg))
@@ -327,17 +315,16 @@ uint8_t fpm_match(void)
 	buf[5] = (uint8_t)(cfg.cap & 0xFF);
 	
 	send(buf, 6);
-	recv(buf, &n);
+	recv(buf);
 	return buf[0] == OK;
 }
 
 uint8_t fpm_clear_db(void)
 {
-	uint16_t n;
 	uint8_t buf[MAXPDLEN];
 
 	buf[0] = 0x0D;
 	send(buf, 1);
-	recv(buf, &n);
+	recv(buf);
 	return buf[0] == OK;
 }
