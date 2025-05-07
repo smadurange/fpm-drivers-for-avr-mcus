@@ -62,7 +62,7 @@ int main(void)
     {	
 		if (fpm_match()) {
 			fpm_led_on(BLUE);
-			_delay_ms(500);
+			_delay_ms(1000);
 			fpm_led_off();
 			_delay_ms(500);
 		}
