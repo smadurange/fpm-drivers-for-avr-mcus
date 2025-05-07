@@ -7,12 +7,14 @@ typedef enum {
 	RED = 0x01,
 	BLUE = 0x02,
 	PURPLE = 0x03
-} FPM_LED_COLOR;
+} COLOR;
 
 uint8_t fpm_init(void);
 
-void fpm_led_on(FPM_LED_COLOR color);
+void fpm_led_on(COLOR color);
 
 void fpm_led_off(void);
+
+uint8_t fpm_clear_db(void);
 
 #endif /* FPM_R50_H */

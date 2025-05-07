@@ -127,22 +127,6 @@ static inline uint8_t check_pwd(void)
 	return buf[0] == OK;
 }
 
-static inline void uint8_t aura_on(void)
-{
-	unsigned int n;
-	uint8_t buf[MAXPDLEN];
-	
-	buf[0] = 0x35;
-	buf[1] = 0x01;
-	buf[2] = 0x00;
-	buf[3] = 0x01;
-	buf[4] = 0x00;
-
-	send(0x01, buf, 5);	
-	recv(buf, &n);
-	return buf[0] == OK;
-}
-
 uint8_t fpm_init(void)
 {
 	UBRR0H = UBRRH_VALUE;
@@ -156,7 +140,15 @@ uint8_t fpm_init(void)
 	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 
 	_delay_ms(RST_DELAY_MS);
-	aura_on();
+
+	uint8_t buf[5];
+	buf[0] = 0x35;
+	buf[1] = 0x03;
+	buf[2] = 0x00;
+	buf[3] = 0x01;
+	buf[4] = 0x00;
+	send(0x01, buf, 5);	
+
 	return check_pwd();
 }
 

@@ -126,9 +126,10 @@ static inline uint8_t check_pwd(void)
 	return buf[0] == OK;
 }
 
-void fpm_led_on(FPM_LED_COLOR color)
+void fpm_led_on(COLOR color)
 {
-	uint8_t buf[5];
+	uint16_t n;
+	uint8_t buf[MAXPDLEN];
 	
 	buf[0] = 0x35;
 	buf[1] = 0x03;
@@ -137,11 +138,13 @@ void fpm_led_on(FPM_LED_COLOR color)
 	buf[4] = 0x00;
 
 	send(0x01, buf, 5);	
+	recv(buf, &n);
 }
 
 void fpm_led_off(void)
 {
-	uint8_t buf[5];
+	uint16_t n;
+	uint8_t buf[MAXPDLEN];
 	
 	buf[0] = 0x35;
 	buf[1] = 0x04;
@@ -150,6 +153,7 @@ void fpm_led_off(void)
 	buf[4] = 0x00;
 
 	send(0x01, buf, 5);	
+	recv(buf, &n);
 }
 
 uint8_t fpm_init(void)
@@ -165,6 +169,16 @@ uint8_t fpm_init(void)
 	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 
 	_delay_ms(RST_DELAY_MS);
-	return 1;
+	return check_pwd();
 }
 
+uint8_t fpm_clear_db(void)
+{
+	uint16_t n;
+	uint8_t buf[MAXPDLEN];
+
+	buf[0] = 0x0D;
+	send(0x01, buf, 1);
+	recv(buf, &n);
+	return buf[0] == OK;
+}
