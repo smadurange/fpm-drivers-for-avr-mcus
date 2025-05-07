@@ -259,7 +259,7 @@ uint8_t fpm_enroll(void)
 	uint8_t buf[MAXPDLEN];
 
 	fpm_get_cfg(&cfg);
-	n = fpm_get_count();
+	n = fpm_get_count() + 1;
 	if (n >= cfg.cap)
 		return 0;
 
