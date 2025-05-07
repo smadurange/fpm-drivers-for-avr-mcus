@@ -39,8 +39,14 @@ int main(void)
 	sei();
 	
 	fpm_init();
-	if (fpm_clear_db())
-		fpm_led_on(PURPLE);
+	if (fpm_get_count() == 0) {
+		for (;;) {
+			fpm_led_on(PURPLE);
+			_delay_ms(500);
+			fpm_led_off();
+			_delay_ms(500);
+		}
+	}
 
     while (1) 
     {	

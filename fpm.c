@@ -195,7 +195,7 @@ uint8_t fpm_setpwd(uint32_t pwd)
 	return buf[0] == OK;
 }
 
-uint16_t fpm_getcount(void)
+uint16_t fpm_get_count(void)
 {
 	uint16_t n, count;
 	uint8_t buf[MAXPDLEN];

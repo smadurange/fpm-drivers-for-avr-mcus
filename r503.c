@@ -182,3 +182,21 @@ uint8_t fpm_clear_db(void)
 	recv(buf, &n);
 	return buf[0] == OK;
 }
+
+uint16_t fpm_get_count(void)
+{
+	uint16_t n, count;
+	uint8_t buf[MAXPDLEN];
+
+	buf[0] = 0x1D;
+	send(0x01, buf, 1);
+	recv(buf, &n);
+
+	count = 0;
+	if (buf[0] == OK && n >= 2) {
+		count = buf[1];
+		count <<= 8;
+		count |= buf[2];
+	}
+	return count;
+}
