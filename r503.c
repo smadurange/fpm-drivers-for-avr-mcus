@@ -4,15 +4,15 @@
 
 #include "r503.h"
 
-#define MAXPDLEN              64
-#define RST_DELAY_MS         500
+#define MAXPDLEN                   64
+#define RST_DELAY_MS              500
 
-#define HEADER_HO           0xEF
-#define HEADER_LO           0x01
-#define ADDR          0xFFFFFFFF
+#define HEADER_HO                0xEF
+#define HEADER_LO                0x01
+#define ADDR               0xFFFFFFFF
 
-#define OK                  0x00
-#define PACKID              0x01
+#define OK                       0x00
+#define PACKID                   0x01
 
 static inline uint8_t read(void)
 {

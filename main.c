@@ -22,6 +22,9 @@
 
 #include "r503.h"
 
+#define FPM_PIN       PD3
+#define FPM_INTVEC    INT1_vect
+
 static inline void uart_write(const char *s)
 {
 	for (; *s; s++) {
@@ -31,6 +34,13 @@ static inline void uart_write(const char *s)
 	Soft_UART_send_byte('\n');
 }
 
+static inline void init_touch(void)
+{
+	DDRD &= ~(1 << FPM_PIN);
+	EICRA = 0b00000000;
+	EIMSK = (1 << INT1);
+}
+
 int main(void)
 {
 	struct fpm_cfg cfg;
@@ -38,6 +48,8 @@ int main(void)
 	cli();
 	Soft_UART_init();
 	bit_set(DDRB,5);
+	init_touch();
+
 	sei();
 	
 	fpm_init();
@@ -59,12 +71,6 @@ int main(void)
 
     while (1) 
     {	
-		if (fpm_match()) {
-			fpm_led_on(BLUE);
-			_delay_ms(1000);
-			fpm_led_off();
-			_delay_ms(500);
-		}
 
 		_delay_ms(2000);
     }
@@ -72,3 +78,19 @@ int main(void)
 	return 0;
 }
 
+ISR(FPM_INTVEC)
+{
+	cli();
+		if (fpm_match()) {
+			fpm_led_on(BLUE);
+			_delay_ms(1000);
+			fpm_led_off();
+			_delay_ms(500);
+		} else {
+			fpm_led_on(RED);
+			_delay_ms(1000);
+			fpm_led_off();
+			_delay_ms(500);
+		}
+	sei();
+}
