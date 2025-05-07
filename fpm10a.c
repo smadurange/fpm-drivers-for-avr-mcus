@@ -2,7 +2,7 @@
 #include <util/delay.h>
 #include <util/setbaud.h>
 
-#include "fpm.h"
+#include "fpm10a.h"
 
 #define MAXPDLEN        64
 #define RST_DELAY_MS   500

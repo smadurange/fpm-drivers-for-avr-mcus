@@ -1,10 +1,14 @@
-FPM10A FINGERPRINT MODULE
+FPM DRIVERS
 
-This is a UART-based driver for FPM10A fingerprint module for AVR
-microcontrollers. I've tested with ATmega328P.
+This project contains drivers for the following fingerprint sensor modules
+FPM10A for AVR microcontrollers:
 
-Since ATmega328P has only one hardware UART, I'm using lynxzp's software UART
-implementation [1] for debugging purposes. Thank you, lynxzp!
+ - R503
+ - FPM10A
+
+I've only tested these with ATmega328P MCU. Since ATmega328P has only one UART,
+I'm using lynxzp's software UART implementation [1] for debugging. Thank you,
+lynxzp!
 
 BUILDING AND UPLOADING
 
