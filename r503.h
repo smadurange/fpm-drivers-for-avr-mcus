@@ -31,7 +31,7 @@ void fpm_led_off(void);
 
 uint16_t fpm_get_count(void);
 
-uint8_t fpm_enroll(uint16_t id);
+uint8_t fpm_enroll(void);
 
 uint8_t fpm_match(void);
 

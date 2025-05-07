@@ -263,10 +263,16 @@ uint16_t fpm_get_count(void)
 	return count;
 }
 
-uint8_t fpm_enroll(uint16_t id)
+uint8_t fpm_enroll(void)
 {
-	uint16_t n;
+	struct fpm_cfg cfg;
+	uint16_t n, id;
 	uint8_t buf[MAXPDLEN];
+
+	fpm_get_cfg(&cfg);
+	id = fpm_get_count();
+	if (n == cfg.cap)
+		return 0;
 
 	if (!scan())
 		return 0;

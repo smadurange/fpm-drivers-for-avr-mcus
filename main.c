@@ -44,8 +44,7 @@ int main(void)
 	fpm_get_cfg(&cfg);
 
 	if (fpm_get_count() == 0) {
-		// todo: check against capacity in prod
-		if (fpm_enroll(1)) {
+		if (fpm_enroll()) {
 			fpm_led_on(BLUE);
 			_delay_ms(500);
 			fpm_led_off();
