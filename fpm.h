@@ -15,16 +15,16 @@ struct fpm_cfg {
 
 uint8_t fpm_init(void);
 
-uint8_t fpm_getcfg(struct fpm_cfg *cfg);
+uint8_t fpm_get_cfg(struct fpm_cfg *cfg);
 
-uint8_t fpm_setpwd(uint32_t pwd);
+uint8_t fpm_set_pwd(uint32_t pwd);
 
-uint16_t fpm_getcount(void);
+uint16_t fpm_get_count(void);
 
 uint8_t fpm_enroll(void);
 
 uint8_t fpm_match(void);
 
-uint8_t fpm_delete_all(void);
+uint8_t fpm_clear_db(void);
 
 #endif  /* FPM_H */

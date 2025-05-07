@@ -110,6 +110,20 @@ bad_pkt:
 	return;
 }
 
+static inline void aura_breathe(COLOR color)
+{
+	uint16_t n;
+	uint8_t buf[5];
+	
+	buf[0] = 0x35;
+	buf[1] = 0x01;
+	buf[2] = 0x20;
+	buf[3] = color;
+	buf[4] = 0x00;
+
+	send(0x01, buf, 5);	
+}
+
 static inline uint8_t check_pwd(void)
 {
 	unsigned int n;
@@ -126,6 +140,38 @@ static inline uint8_t check_pwd(void)
 	return buf[0] == OK;
 }
 
+static inline uint8_t scan(void)
+{
+	uint16_t n, retries;
+	uint8_t buf[MAXPDLEN], led;
+	
+	retries = 0;
+	fpm_led_on(PURPLE);
+	led = 1;
+	_delay_ms(500);
+
+	do {
+		buf[0] = 0x01;
+		send(0x01, buf, 1);
+		recv(buf, &n);
+		if (buf[0] != OK) {
+			retries++;
+			if (led) {
+				fpm_led_off();
+				led = 0;
+			} else {
+				fpm_led_on(PURPLE);
+				led = 1;
+			}
+			_delay_ms(500);
+		}
+	} while(buf[0] != OK && retries < 100);
+
+	fpm_led_off();
+	led = 0;
+	return buf[0] == OK;
+}
+
 void fpm_led_on(COLOR color)
 {
 	uint16_t n;
@@ -138,7 +184,6 @@ void fpm_led_on(COLOR color)
 	buf[4] = 0x00;
 
 	send(0x01, buf, 5);	
-	recv(buf, &n);
 }
 
 void fpm_led_off(void)
@@ -153,7 +198,6 @@ void fpm_led_off(void)
 	buf[4] = 0x00;
 
 	send(0x01, buf, 5);	
-	recv(buf, &n);
 }
 
 uint8_t fpm_init(void)
@@ -170,6 +214,33 @@ uint8_t fpm_init(void)
 
 	_delay_ms(RST_DELAY_MS);
 	return check_pwd();
+}
+
+uint8_t fpm_get_cfg(struct fpm_cfg *cfg)
+{
+	uint16_t n;
+	uint8_t buf[MAXPDLEN];
+
+	buf[0] = 0x0F;
+	send(0x01, buf, 1);
+	recv(buf, &n);
+
+	if (buf[0] == OK && n >= 17) {
+		cfg->status = ((uint16_t)buf[1] << 8) | buf[2];
+		cfg->sysid = ((uint16_t)buf[3] << 8) | buf[4];
+		cfg->cap = ((uint16_t)buf[5] << 8) | buf[6];
+		cfg->sec_level = ((uint16_t)buf[7] << 8) | buf[8];
+		cfg->addr[0] = buf[9];
+		cfg->addr[1] = buf[10];
+		cfg->addr[2] = buf[11];
+		cfg->addr[3] = buf[12];
+		cfg->pkt_size = ((uint16_t)buf[13] << 8) | buf[14];
+		cfg->pkt_size = 1 << (cfg->pkt_size + 5); 
+		cfg->baud = (((uint16_t)buf[15] << 8) | buf[16]);
+
+		return 1;
+	}
+	return 0;
 }
 
 uint8_t fpm_clear_db(void)
@@ -199,4 +270,15 @@ uint16_t fpm_get_count(void)
 		count |= buf[2];
 	}
 	return count;
+}
+
+uint8_t fpm_enroll(void)
+{
+	uint16_t n, retries;
+	uint8_t buf[MAXPDLEN], led;
+	
+	if (!scan())	
+		return 0;
+
+	return 1;
 }

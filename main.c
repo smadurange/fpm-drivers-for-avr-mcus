@@ -40,12 +40,7 @@ int main(void)
 	
 	fpm_init();
 	if (fpm_get_count() == 0) {
-		for (;;) {
-			fpm_led_on(PURPLE);
-			_delay_ms(500);
-			fpm_led_off();
-			_delay_ms(500);
-		}
+		fpm_enroll();
 	}
 
     while (1) 

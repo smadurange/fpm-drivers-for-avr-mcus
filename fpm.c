@@ -152,7 +152,7 @@ uint8_t fpm_init(void)
 	return check_pwd();
 }
 
-uint8_t fpm_getcfg(struct fpm_cfg *cfg)
+uint8_t fpm_get_cfg(struct fpm_cfg *cfg)
 {
 	uint16_t n;
 	uint8_t buf[MAXPDLEN];
@@ -179,7 +179,7 @@ uint8_t fpm_getcfg(struct fpm_cfg *cfg)
 	return 0;
 }
 
-uint8_t fpm_setpwd(uint32_t pwd)
+uint8_t fpm_set_pwd(uint32_t pwd)
 {
 	uint16_t n;
 	uint8_t buf[MAXPDLEN];
@@ -249,7 +249,7 @@ uint8_t fpm_match(void)
 	return buf[0] == OK;
 }
 
-uint8_t fpm_delete_all(void)
+uint8_t fpm_clear_db(void)
 {
 	uint16_t n;
 	uint8_t buf[MAXPDLEN];
