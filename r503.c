@@ -110,18 +110,19 @@ bad_pkt:
 	return;
 }
 
-static inline void aura_breathe(COLOR color)
+static inline void led_ctrl(uint8_t mode, COLOR color)
 {
 	uint16_t n;
-	uint8_t buf[5];
+	uint8_t buf[MAXPDLEN];
 	
 	buf[0] = 0x35;
-	buf[1] = 0x01;
-	buf[2] = 0x20;
+	buf[1] = mode;
+	buf[2] = 0x40;
 	buf[3] = color;
 	buf[4] = 0x00;
 
 	send(0x01, buf, 5);	
+	recv(buf, &n);
 }
 
 static inline uint8_t check_pwd(void)
@@ -143,12 +144,10 @@ static inline uint8_t check_pwd(void)
 static inline uint8_t scan(void)
 {
 	uint16_t n, retries;
-	uint8_t buf[MAXPDLEN], led;
+	uint8_t buf[MAXPDLEN];
 	
 	retries = 0;
-	fpm_led_on(PURPLE);
-	led = 1;
-	_delay_ms(500);
+	led_ctrl(0x01, PURPLE);
 
 	do {
 		buf[0] = 0x01;
@@ -156,48 +155,22 @@ static inline uint8_t scan(void)
 		recv(buf, &n);
 		if (buf[0] != OK) {
 			retries++;
-			if (led) {
-				fpm_led_off();
-				led = 0;
-			} else {
-				fpm_led_on(PURPLE);
-				led = 1;
-			}
-			_delay_ms(500);
+			_delay_ms(100);
 		}
 	} while(buf[0] != OK && retries < 100);
 
 	fpm_led_off();
-	led = 0;
 	return buf[0] == OK;
 }
 
 void fpm_led_on(COLOR color)
 {
-	uint16_t n;
-	uint8_t buf[MAXPDLEN];
-	
-	buf[0] = 0x35;
-	buf[1] = 0x03;
-	buf[2] = 0x00;
-	buf[3] = color;
-	buf[4] = 0x00;
-
-	send(0x01, buf, 5);	
+	led_ctrl(0x03, color);
 }
 
 void fpm_led_off(void)
 {
-	uint16_t n;
-	uint8_t buf[MAXPDLEN];
-	
-	buf[0] = 0x35;
-	buf[1] = 0x04;
-	buf[2] = 0x00;
-	buf[3] = 0x00;
-	buf[4] = 0x00;
-
-	send(0x01, buf, 5);	
+	led_ctrl(0x04, 0x00);
 }
 
 uint8_t fpm_init(void)
